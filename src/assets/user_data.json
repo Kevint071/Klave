@@ -1,0 +1,26 @@
+{
+  "songs": [
+    {
+      "id": 1,
+      "title": "El mundo necesita conocer a Dios",
+      "key": "Do",
+      "character": "Adoración,Alabanza,Evangelístico",
+      "tempo": "Rápida"
+    },
+    {
+      "id": 2,
+      "title": "La bondad de dios",
+      "key": "Sol#",
+      "character": "Adoración,Alabanza,Oración",
+      "tempo": "Lenta"
+    }
+  ],
+  "characters": [
+    "Oración",
+    "Evangelístico",
+    "Alabanza",
+    "Adoración",
+    "Misionero"
+  ],
+  "theme": "dark"
+}
