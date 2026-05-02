@@ -75,6 +75,7 @@ class CharacterSettingsView:
                     main_view.refresh_character_options()
 
                 show_snackbar(self.page, "Carácter agregado exitosamente", "#00b894")
+                await self.app.save_async()
             else:
                 show_snackbar(self.page, "El carácter ya existe", "#ff7675")
 
@@ -93,6 +94,7 @@ class CharacterSettingsView:
                     mv.refresh_character_options()
 
                 show_snackbar(self.page, "Carácter agregado exitosamente", "#00b894")
+                await self.app.save_async()
             else:
                 show_snackbar(self.page, "El carácter ya existe", "#ff7675")
 
@@ -106,6 +108,7 @@ class CharacterSettingsView:
                 main_view.refresh_character_options()
 
             show_snackbar(self.page, "Carácter eliminado exitosamente", "#ff7675")
+            await self.app.save_async()
 
     def build(self, main_view):
         """Construye la vista de edición de caracteres"""

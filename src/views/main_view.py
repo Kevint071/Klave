@@ -346,7 +346,7 @@ class MainView:
         dialog.open = True
         self.page.update()
 
-    def update_results(self, songs):
+    def update_results(self, songs, notify=True):
         self.results_column.controls.clear()
         if not songs:
             self.results_column.controls.append(
@@ -361,7 +361,14 @@ class MainView:
                         lambda s=song: asyncio.create_task(self.go_to_edit(s)),
                     )
                 )
-        self.page.update()
+        if notify:
+            # Actualización dirigida al Column cuando ya está montado en la página.
+            # Es mucho más ligera que page.update() porque solo parchea el subárbol
+            # del Column, no la página completa.
+            if self.results_column.page:
+                self.results_column.update()
+            else:
+                self.page.update()
 
     def search_handler(self, e):
         query = self.search_field.value.strip() if self.search_field.value else ""
@@ -387,18 +394,13 @@ class MainView:
         pass
 
     def refresh_theme(self):
+        # Solo actualizar colores del campo de búsqueda.
+        # update_results se omite aquí — route_change() llama search_handler()
+        # en la Fase 2, después de que el skeleton ya fue enviado a Flutter.
         colors = get_theme_colors(self.page)
         self.search_field.border_color = colors["border_color"]
         self.search_field.bgcolor = colors["bg_secondary"]
         self.search_field.color = colors["text_primary"]
-        self.update_results(
-            self.app.search_songs(
-                self.search_field.value.strip() if self.search_field.value else "",
-                self._build_filter_key(),
-                self._filter_character,
-                self._filter_ritmo,
-            )
-        )
 
     def build(self):
         colors = get_theme_colors(self.page)

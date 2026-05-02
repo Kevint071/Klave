@@ -1,3 +1,4 @@
+import asyncio
 import json
 import os
 
@@ -55,12 +56,18 @@ class SongApp:
         return {"songs": [], "characters": DEFAULT_CHARACTERS.copy(), "theme": "dark"}
 
     def save_user_data(self):
-        """Guarda datos del usuario en el archivo JSON"""
+        """Guarda datos del usuario en el archivo JSON (síncrono, solo para inicio)"""
         try:
-            with open(self.data_file, "w", encoding="utf-8") as f:
+            temp_file = f"{self.data_file}.tmp"
+            with open(temp_file, "w", encoding="utf-8") as f:
                 json.dump(self.user_data, f, ensure_ascii=False, indent=2)
+            os.replace(temp_file, self.data_file)
         except Exception as e:
             print(f"Error guardando datos: {e}")
+
+    async def save_async(self):
+        """Guarda datos en disco en un thread separado para no bloquear el event loop"""
+        await asyncio.to_thread(self.save_user_data)
 
     # ===== GESTIÓN DE TEMA =====
 
@@ -69,32 +76,26 @@ class SongApp:
         return self.user_data.get("theme", "dark")
 
     def save_theme(self, mode):
-        """Guarda el tema en el archivo JSON"""
+        """Muta el tema en memoria (llamar save_async() para persistir)"""
         self.user_data["theme"] = mode
-        self.save_user_data()
 
     # ===== GESTIÓN DE CARACTERES =====
     
     def get_characters(self):
         """Obtiene la lista de caracteres disponibles"""
-        self.user_data = self.load_user_data()
         return self.user_data.get("characters", DEFAULT_CHARACTERS.copy())
 
     def add_character(self, character):
-        """Agrega un nuevo carácter"""
+        """Agrega un carácter en memoria (llamar save_async() para persistir)"""
         if character and character not in self.user_data["characters"]:
             self.user_data["characters"].append(character)
-            self.save_user_data()
-            self.user_data = self.load_user_data()
             return True
         return False
 
     def remove_character(self, character):
-        """Elimina un carácter"""
+        """Elimina un carácter en memoria (llamar save_async() para persistir)"""
         if character in self.user_data["characters"]:
             self.user_data["characters"].remove(character)
-            self.save_user_data()
-            self.user_data = self.load_user_data()
             return True
         return False
 
@@ -105,7 +106,7 @@ class SongApp:
         return self.user_data.get("songs", [])
 
     def add_song(self, title, key, character, tempo):
-        """Agrega una nueva canción"""
+        """Agrega una canción en memoria (llamar save_async() para persistir)"""
         new_id = max([s["id"] for s in self.user_data["songs"]], default=0) + 1
         new_song = {
             "id": new_id,
@@ -115,11 +116,10 @@ class SongApp:
             "tempo": tempo
         }
         self.user_data["songs"].append(new_song)
-        self.save_user_data()
         return new_song
 
     def update_song(self, song_id, title=None, key=None, character=None, tempo=None):
-        """Actualiza una canción existente"""
+        """Actualiza una canción en memoria (llamar save_async() para persistir)"""
         for song in self.user_data["songs"]:
             if song["id"] == song_id:
                 if title is not None:
@@ -130,14 +130,12 @@ class SongApp:
                     song["character"] = character
                 if tempo is not None:
                     song["tempo"] = tempo
-                self.save_user_data()
                 return True
         return False
 
     def delete_song(self, song_id):
-        """Elimina una canción"""
+        """Elimina una canción en memoria (llamar save_async() para persistir)"""
         self.user_data["songs"] = [s for s in self.user_data["songs"] if s["id"] != song_id]
-        self.save_user_data()
 
     def search_songs(self, query="", key="", character="", tempo=""):
         """

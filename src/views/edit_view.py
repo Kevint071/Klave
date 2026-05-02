@@ -11,6 +11,14 @@ class EditView(SongFormView):
     def __init__(self, page, app):
         super().__init__(page, app, "/edit", "Editar Canción", ["#74b9ff", "#a29bfe"])
 
+    async def _delete_song_and_return(self, song_id):
+        self.app.delete_song(song_id)
+        self.page.session.store.set("editing_song", None)
+        self.clear_form()
+        await self.page.push_route("/")
+        show_snackbar(self.page, "Canción eliminada exitosamente", "#ff7675")
+        asyncio.create_task(self.app.save_async())
+
     async def delete_from_edit(self, main_view):
         editing_song = self.page.session.store.get("editing_song")
         if not editing_song:
@@ -18,13 +26,7 @@ class EditView(SongFormView):
 
         def on_confirm():
             try:
-                self.app.delete_song(editing_song["id"])
-                self.page.session.store.set("editing_song", None)
-                self.clear_form()
-                if main_view:
-                    main_view.search_handler(None)
-                show_snackbar(self.page, "Canción eliminada exitosamente", "#ff7675")
-                asyncio.create_task(self.page.push_route("/"))
+                asyncio.create_task(self._delete_song_and_return(editing_song["id"]))
             except Exception as ex:
                 print("ERROR al eliminar canción:", ex)
                 show_snackbar(self.page, "Error al eliminar la canción", "#ff7675")

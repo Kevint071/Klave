@@ -113,7 +113,7 @@ class SongFormView:
             bgcolor=c["border_focused"] if selected else c["bg_secondary"],
             border_radius=20,
             padding=ft.Padding(left=4, right=4, top=2, bottom=2),
-            border=ft.border.all(
+            border=ft.Border.all(
                 1.5 if selected else 1,
                 c["border_focused"] if selected else c["border_color"],
             ),
@@ -269,7 +269,7 @@ class SongFormView:
                 ],
                 spacing=10,
             ),
-            padding=ft.padding.symmetric(vertical=10),
+            padding=ft.Padding.symmetric(vertical=10),
         )
 
     def _section_divider(self):
@@ -363,8 +363,11 @@ class SongFormView:
             show_snackbar(self.page, "Canción agregada exitosamente", "#00b894")
 
         self.clear_form()
-        main_view.search_handler(None)
+        # No llamar search_handler aquí: route_change() lo hace en la Fase 2
+        # después de navegar, evitando un page.update() redundante antes de push_route.
         await self.page.push_route("/")
+        # Guardar en disco en thread separado para no bloquear el event loop
+        await self.app.save_async()
 
     # ── Build ─────────────────────────────────────────────────────────────────
 
@@ -418,7 +421,7 @@ class SongFormView:
                 end=ft.Alignment.CENTER_RIGHT,
             ),
             border_radius=14,
-            padding=ft.padding.symmetric(vertical=16),
+            padding=ft.Padding.symmetric(vertical=16),
             shadow=ft.BoxShadow(
                 blur_radius=20,
                 spread_radius=0,
@@ -448,7 +451,7 @@ class SongFormView:
                         ],
                         spacing=0,
                     ),
-                    padding=ft.padding.symmetric(vertical=10),
+                    padding=ft.Padding.symmetric(vertical=10),
                 ),
 
                 self._section_divider(),
@@ -503,7 +506,7 @@ class SongFormView:
                 header,
                 ft.Container(
                     content=form_content,
-                    padding=ft.padding.symmetric(horizontal=16, vertical=8),
+                    padding=ft.Padding.symmetric(horizontal=16, vertical=8),
                     expand=True,
                 ),
             ],

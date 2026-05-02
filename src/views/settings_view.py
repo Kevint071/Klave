@@ -18,13 +18,26 @@ class SettingsView:
         self.page.session.store.set("theme_mode", mode)
         self.page.theme_mode = ft.ThemeMode.LIGHT if mode == "light" else ft.ThemeMode.DARK
         self.page.bgcolor = "#f5f6fa" if mode == "light" else "#0a0e27"
-        apply_system_overlay(self.page)
-        self.app.save_theme(mode)
-        # Reconstruir las vistas en-lugar para aplicar el cambio inmediatamente
-        self.page.views.clear()
-        self.page.views.append(main_view.build())
-        self.page.views.append(self.build(main_view))
+
+        # Fase 1: enviar solo los cambios de página (theme_mode + bgcolor).
+        # Son propiedades simples → patch tiny → Flutter las aplica al instante
+        # y oculta el indicador 'working' antes de que continuemos con el rebuild.
         self.page.update()
+
+        # Ceder al event loop para que send_loop envíe el mensaje al socket
+        # antes de que Python construya la nueva vista (operación más costosa).
+        await asyncio.sleep(0)
+
+        # Fase 2: reconstruir los controles de la vista de ajustes con los nuevos
+        # colores y enviar solo el delta de controles (no toda la página).
+        new_view = self.build(main_view)
+        current_view = self.page.views[-1]
+        current_view.bgcolor = new_view.bgcolor
+        current_view.controls = new_view.controls
+        self.page.update()
+
+        self.app.save_theme(mode)
+        await self.app.save_async()
 
     def build(self, main_view):
         colors = get_theme_colors(self.page)
